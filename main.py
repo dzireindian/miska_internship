@@ -52,6 +52,7 @@ async def removeItem(id:str):
 
 @app.put("/updateCart/{id}")
 async def updateCart(id:str,item: str):
+    authorize()
     cart = mydb['cart']
     cart.update({'userId': id}, {'$push': {'items': bson.ObjectId(item)}})
     return {"status": "success"}
