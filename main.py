@@ -18,20 +18,42 @@ def authorize():
     if session.get("user") == None:
         raise HTTPException(status_code=401, detail="Unauthorized user")
 
+async def findProduct(id):
+    x = mydb['products'].find_one({id: bson.ObjectId(id)})
+    return x
+
 @app.get("/addItem")
 async def AddItem(request: Request):
     authorize()
     # print("request =",request.json())
     products = mydb['products']
-    x = products.insert_one(await request.json())
+    x = await products.insert_one(await request.json())
     return {"status": "success"}
 
 @app.put("/updateItem/{id}")
 async def updateItem(id:str,price:int):
     authorize()
     products = mydb['products']
+    if findProduct(id) == None:
+        return {"status": "failed"}
     id = bson.ObjectId(id)
     products.update_one({"_id":id},{"$set":{"price":price}})
+    return {"status": "success"}
+
+@app.delete("/removeItem/{id}")
+async def removeItem(id:str):
+    authorize()
+    products = mydb['products']
+    if findProduct(id) == None:
+        return {"status": "failed"}
+    id = bson.ObjectId(id)
+    products.delete_one({"_id":id})
+    return {"status": "success"}
+
+@app.put("/updateCart/{id}")
+async def updateCart(id:str,item: str):
+    cart = mydb['cart']
+    cart.update({'userId': id}, {'$push': {'items': bson.ObjectId(item)}})
     return {"status": "success"}
 
 @app.get("/getItems")
